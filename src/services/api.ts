@@ -29,13 +29,20 @@ function buildHeaders(server: Server): HeadersInit {
   };
 }
 
+function getBaseUrl(server: Server): string {
+  let url = server.url.replace(/\/+$/, '');
+  if (url.endsWith('/api/stats')) url = url.slice(0, -10);
+  if (url.endsWith('/api/ping')) url = url.slice(0, -9);
+  return url;
+}
+
 /**
  * Pings the server to check if it is alive.
  * Expects GET /api/ping → { status: "ok" }
  */
 export async function fetchPing(server: Server): Promise<boolean> {
   try {
-    const url = `${server.url.replace(/\/$/, '')}/api/ping`;
+    const url = `${getBaseUrl(server)}/api/ping`;
     const response = await fetchWithTimeout(url, { headers: buildHeaders(server) }, REQUEST_TIMEOUT_MS);
     return response.ok;
   } catch (error: any) {
@@ -56,7 +63,7 @@ export async function fetchPing(server: Server): Promise<boolean> {
  * should return JSON matching the ServerStats type.
  */
 export async function fetchStats(server: Server): Promise<ServerStats> {
-  const url = `${server.url.replace(/\/$/, '')}/api/stats`;
+  const url = `${getBaseUrl(server)}/api/stats`;
 
   let response: Response;
   try {
@@ -145,7 +152,7 @@ export async function fetchCheckPort(
   protocol: string
 ): Promise<boolean> {
   try {
-    const url = `${server.url.replace(/\/$/, '')}/api/check_port?host=${host}&port=${port}&protocol=${protocol}`;
+    const url = `${getBaseUrl(server)}/api/check_port?host=${host}&port=${port}&protocol=${protocol}`;
     const response = await fetchWithTimeout(url, { headers: buildHeaders(server) }, 5000);
     if (!response.ok) return false;
     const data = await response.json();
