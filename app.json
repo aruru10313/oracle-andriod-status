@@ -1,0 +1,70 @@
+{
+  "expo": {
+    "name": "Oracle Monitor",
+    "slug": "oracle-monitor",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0f1117"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.oraclemonitor.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0f1117"
+      },
+      "package": "com.oraclemonitor.app",
+      "versionCode": 1,
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.VIBRATE",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.SCHEDULE_EXACT_ALARM"
+      ],
+      "googleServicesFile": "./google-services.json"
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#4f8ef7",
+          "sounds": []
+        }
+      ],
+      "expo-background-fetch",
+      "expo-task-manager",
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "ServerStatusWidget",
+              "label": "Server Status",
+              "minWidth": "180dp",
+              "minHeight": "110dp",
+              "description": "Shows Oracle server status",
+              "previewImage": "./assets/widget-preview.png",
+              "updatePeriodMillis": 300000
+            }
+          ]
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "YOUR_EAS_PROJECT_ID"
+      }
+    }
+  }
+}

@@ -1,0 +1,56 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 'Build profile (preview or production)'
+        required: false
+        default: 'preview'
+
+jobs:
+  build:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: android-app/package-lock.json
+
+      - name: 📦 Install dependencies
+        working-directory: android-app
+        run: npm ci
+
+      - name: 🛠 Install EAS CLI
+        run: npm install -g eas-cli@latest
+
+      - name: 🔐 Authenticate with Expo
+        run: eas whoami
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: 🏗 Build APK (preview)
+        working-directory: android-app
+        run: eas build --platform android --profile ${{ github.event.inputs.profile || 'preview' }} --non-interactive --output ./build/oracle-monitor.apk
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: 📤 Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: oracle-monitor-apk-${{ github.run_number }}
+          path: android-app/build/oracle-monitor.apk
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: 📋 Build complete
+        run: echo "✅ Build complete! Download the APK from the Actions tab Artifacts section."
