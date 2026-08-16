@@ -40,6 +40,10 @@ jobs:
       - name: 🏗 Generate Native Android Code (Prebuild)
         run: npx expo prebuild --platform android --no-install
 
+      - name: ⬇️ Downgrade Gradle to 8.6 (Fix for Expo 51)
+        working-directory: ./android
+        run: sed -i 's/gradle-[0-9\.]*-all.zip/gradle-8.6-all.zip/g' gradle/wrapper/gradle-wrapper.properties
+
       - name: 🔨 Build APK with Gradle
         working-directory: ./android
         run: ./gradlew assembleRelease
