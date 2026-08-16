@@ -4,23 +4,13 @@
     "slug": "oracle-monitor",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#0f1117"
-    },
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.oraclemonitor.app"
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#0f1117"
-      },
       "package": "com.oraclemonitor.app",
       "versionCode": 1,
       "permissions": [
@@ -37,7 +27,6 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/notification-icon.png",
           "color": "#4f8ef7",
           "sounds": []
         }
@@ -54,7 +43,6 @@
               "minWidth": "180dp",
               "minHeight": "110dp",
               "description": "Shows Oracle server status",
-              "previewImage": "./assets/widget-preview.png",
               "updatePeriodMillis": 300000
             }
           ]
