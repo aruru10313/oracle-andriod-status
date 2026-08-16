@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "오라클 모니터",
-    "slug": "oracle-monitor",
+    "name": "root1",
+    "slug": "root1",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
@@ -11,7 +11,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.oraclemonitor.app"
