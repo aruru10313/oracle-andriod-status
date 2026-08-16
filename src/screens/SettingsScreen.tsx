@@ -13,8 +13,10 @@ import {
   Alert,
   Platform,
 } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import Toast from 'react-native-toast-message';
 
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../theme';
 import { RootStackParamList, Server, AppSettings } from '../types';
@@ -25,6 +27,10 @@ import { registerBackgroundFetch } from '../tasks/backgroundFetch';
 type NavT = StackNavigationProp<RootStackParamList>;
 
 const INTERVALS = [1, 5, 10, 15, 30];
+
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
+import * as DocumentPicker from 'expo-document-picker';
 
 const SettingsScreen: React.FC = () => {
   const navigation = useNavigation<NavT>();
@@ -55,7 +61,6 @@ const SettingsScreen: React.FC = () => {
   const persistSettings = async (updated: AppSettings) => {
     setSettings(updated);
     await saveSettings(updated);
-    // Re-register background fetch with new interval
     await registerBackgroundFetch(updated.pollingIntervalMinutes);
   };
 
@@ -86,16 +91,52 @@ const SettingsScreen: React.FC = () => {
     setTestingServer(server.id);
     try {
       const ok = await fetchPing(server);
-      Alert.alert(
-        ok ? '✅ 연결 성공' : '❌ 연결 실패',
-        ok
-          ? `${server.name}에 성공적으로 연결되었습니다`
-          : `${server.name}에 연결할 수 없습니다.\nURL과 API 키를 확인하세요.`
-      );
+      if (ok) {
+        Toast.show({ type: 'success', text1: '연결 성공', text2: `${server.name} 서버 응답이 정상입니다.` });
+      } else {
+        Toast.show({ type: 'error', text1: '연결 실패', text2: `${server.name}에 연결할 수 없습니다. URL을 확인하세요.` });
+      }
     } catch (e: any) {
-      Alert.alert('❌ 오류', e.message);
+      Toast.show({ type: 'error', text1: '연결 오류', text2: e.message });
     } finally {
       setTestingServer(null);
+    }
+  };
+
+  // 백업 및 복원 기능
+  const exportSettings = async () => {
+    try {
+      const data = JSON.stringify({ servers, settings }, null, 2);
+      const fileUri = `${FileSystem.documentDirectory}oracle_monitor_backup.json`;
+      await FileSystem.writeAsStringAsync(fileUri, data, { encoding: FileSystem.EncodingType.UTF8 });
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(fileUri, { dialogTitle: '설정 백업 저장', mimeType: 'application/json' });
+      } else {
+        Toast.show({ type: 'error', text1: '공유 불가', text2: '기기에서 공유 기능을 지원하지 않습니다.' });
+      }
+    } catch (error) {
+      Toast.show({ type: 'error', text1: '백업 실패', text2: '백업 파일을 생성하는 도중 오류가 발생했습니다.' });
+    }
+  };
+
+  const importSettings = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({ type: 'application/json', copyToCacheDirectory: true });
+      if (result.canceled || !result.assets || result.assets.length === 0) return;
+      const fileContent = await FileSystem.readAsStringAsync(result.assets[0].uri, { encoding: FileSystem.EncodingType.UTF8 });
+      const parsed = JSON.parse(fileContent);
+      
+      if (parsed.servers && parsed.settings) {
+        setServers(parsed.servers);
+        setSettings(parsed.settings);
+        await saveServers(parsed.servers);
+        await saveSettings(parsed.settings);
+        Toast.show({ type: 'success', text1: '복원 완료', text2: '서버 목록과 설정이 완벽하게 복원되었습니다!' });
+      } else {
+        Toast.show({ type: 'error', text1: '복원 실패', text2: '잘못된 백업 파일 형식입니다.' });
+      }
+    } catch (error) {
+      Toast.show({ type: 'error', text1: '복원 실패', text2: '백업 파일을 읽는 도중 오류가 발생했습니다.' });
     }
   };
 
@@ -269,6 +310,22 @@ const SettingsScreen: React.FC = () => {
               })
             }
           />
+        </View>
+
+        {/* ── Backup & Restore ── */}
+        <SectionHeader>데이터 백업 및 복원</SectionHeader>
+        <View style={styles.card}>
+          <Text style={{ color: Colors.textSecondary, fontSize: FontSize.sm, marginBottom: Spacing.md, lineHeight: 18 }}>
+            앱을 삭제하거나 업데이트하기 전에 설정을 백업해두면 다시 설치했을 때 그대로 복원할 수 있습니다.
+          </Text>
+          <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
+            <TouchableOpacity style={styles.backupBtn} onPress={exportSettings}>
+              <Text style={styles.backupBtnText}><Feather name="upload" size={14} /> 백업 저장</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.restoreBtn} onPress={importSettings}>
+              <Text style={styles.restoreBtnText}><Feather name="download" size={14} /> 설정 불러오기</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View style={{ height: 40 }} />
@@ -516,6 +573,32 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: Colors.separator,
     marginVertical: Spacing.sm,
+  },
+  backupBtn: {
+    flex: 1,
+    backgroundColor: Colors.surfaceElevated,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.md,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.cardBorder,
+  },
+  backupBtnText: {
+    color: Colors.textPrimary,
+    fontWeight: FontWeight.semibold,
+    fontSize: FontSize.sm,
+  },
+  restoreBtn: {
+    flex: 1,
+    backgroundColor: Colors.accentDark,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.md,
+    alignItems: 'center',
+  },
+  restoreBtnText: {
+    color: '#fff',
+    fontWeight: FontWeight.semibold,
+    fontSize: FontSize.sm,
   },
 });
 

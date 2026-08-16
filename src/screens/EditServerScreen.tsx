@@ -25,6 +25,9 @@ import { fetchPing } from '../services/api';
 type RouteT = RouteProp<RootStackParamList, 'EditServer'>;
 type NavT = StackNavigationProp<RootStackParamList>;
 
+import { Feather } from '@expo/vector-icons';
+import Toast from 'react-native-toast-message';
+
 const EditServerScreen: React.FC = () => {
   const route = useRoute<RouteT>();
   const navigation = useNavigation<NavT>();
@@ -70,7 +73,7 @@ const EditServerScreen: React.FC = () => {
   const handleTest = async () => {
     const err = validate();
     if (err) {
-      Alert.alert('입력 오류', err);
+      Toast.show({ type: 'error', text1: '입력 오류', text2: err });
       return;
     }
     setTesting(true);
@@ -84,14 +87,13 @@ const EditServerScreen: React.FC = () => {
         createdAt: Date.now(),
       };
       const ok = await fetchPing(tempServer);
-      Alert.alert(
-        ok ? '✅ 연결 성공!' : '❌ 연결 실패',
-        ok
-          ? '서버가 응답했습니다. 저장해도 됩니다.'
-          : '서버가 응답하지 않습니다. URL과 API 키를 확인하세요.\n\n(서버 에이전트가 실행 중인지 확인하세요)'
-      );
+      if (ok) {
+        Toast.show({ type: 'success', text1: '연결 성공!', text2: '서버가 응답했습니다. 저장해도 됩니다.' });
+      } else {
+        Toast.show({ type: 'error', text1: '연결 실패', text2: '서버가 응답하지 않습니다. URL과 API 키를 확인하세요.' });
+      }
     } catch (e: any) {
-      Alert.alert('오류', e.message);
+      Toast.show({ type: 'error', text1: '오류', text2: e.message });
     } finally {
       setTesting(false);
     }
@@ -100,7 +102,7 @@ const EditServerScreen: React.FC = () => {
   const handleSave = async () => {
     const err = validate();
     if (err) {
-      Alert.alert('입력 오류', err);
+      Toast.show({ type: 'error', text1: '입력 오류', text2: err });
       return;
     }
     setSaving(true);
@@ -114,6 +116,7 @@ const EditServerScreen: React.FC = () => {
             : s
         );
         await saveServers(updated);
+        Toast.show({ type: 'success', text1: '저장 완료', text2: '서버 정보가 업데이트되었습니다.' });
       } else {
         const newServer: Server = {
           id: generateId(),
@@ -125,11 +128,12 @@ const EditServerScreen: React.FC = () => {
           ports,
         };
         await saveServers([...servers, newServer]);
+        Toast.show({ type: 'success', text1: '추가 완료', text2: '새로운 서버가 추가되었습니다.' });
       }
 
       navigation.goBack();
     } catch (e: any) {
-      Alert.alert('저장 오류', e.message);
+      Toast.show({ type: 'error', text1: '저장 오류', text2: e.message });
     } finally {
       setSaving(false);
     }
@@ -143,7 +147,7 @@ const EditServerScreen: React.FC = () => {
       {/* Nav bar */}
       <View style={styles.navBar}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backIcon}>←</Text>
+          <Feather name="chevron-left" size={28} color={Colors.accent} />
         </TouchableOpacity>
         <Text style={styles.navTitle}>{isEditing ? '서버 편집' : '서버 추가'}</Text>
         <View style={{ width: 36 }} />
@@ -153,7 +157,7 @@ const EditServerScreen: React.FC = () => {
 
         {/* Info card */}
         <View style={styles.infoCard}>
-          <Text style={styles.infoTitle}>📋 서버 에이전트 안내</Text>
+          <Text style={styles.infoTitle}><Feather name="info" size={16} /> 서버 에이전트 안내</Text>
           <Text style={styles.infoText}>
             Ubuntu 서버에 모니터링 에이전트를 설치해야 합니다.{'\n'}
             에이전트는 <Text style={styles.infoCode}>/api/ping</Text>과{' '}
@@ -192,7 +196,7 @@ const EditServerScreen: React.FC = () => {
         {/* Ports Card */}
         <View style={styles.card}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.md }}>
-            <Text style={styles.infoTitle}>🔌 포트 모니터링</Text>
+            <Text style={styles.infoTitle}><Feather name="globe" size={16} /> 포트 모니터링</Text>
             <TouchableOpacity onPress={addPort}>
               <Text style={{ color: Colors.accent, fontWeight: 'bold' }}>+ 추가</Text>
             </TouchableOpacity>
@@ -224,7 +228,7 @@ const EditServerScreen: React.FC = () => {
                 <Text style={styles.portProtoText}>{p.protocol.toUpperCase()}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.portDelBtn} onPress={() => removePort(idx)}>
-                <Text style={styles.portDelText}>✕</Text>
+                <Feather name="x" size={18} color={Colors.danger} />
               </TouchableOpacity>
             </View>
           ))}
@@ -240,7 +244,7 @@ const EditServerScreen: React.FC = () => {
           disabled={testing}
         >
           <Text style={styles.testBtnText}>
-            {testing ? '연결 테스트 중...' : '🔌 연결 테스트'}
+            {testing ? '연결 테스트 중...' : '연결 테스트'}
           </Text>
         </TouchableOpacity>
 
@@ -250,7 +254,7 @@ const EditServerScreen: React.FC = () => {
           disabled={saving}
         >
           <Text style={styles.saveBtnText}>
-            {saving ? '저장 중...' : isEditing ? '✅ 변경사항 저장' : '➕ 서버 추가'}
+            {saving ? '저장 중...' : isEditing ? '변경사항 저장' : '서버 추가'}
           </Text>
         </TouchableOpacity>
 

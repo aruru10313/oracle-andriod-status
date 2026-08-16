@@ -3,6 +3,7 @@
 // ============================================================
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Feather } from '@expo/vector-icons';
 import {
   View,
   Text,
@@ -173,7 +174,7 @@ const HomeScreen: React.FC = () => {
       {/* Header */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.headerTitle}>Oracle Monitor</Text>
+          <Text style={styles.headerTitle}>오라클 모니터</Text>
           {formattedTime && (
             <Text style={styles.headerSub}>마지막 업데이트: {formattedTime}</Text>
           )}
@@ -182,7 +183,7 @@ const HomeScreen: React.FC = () => {
           style={styles.headerBtn}
           onPress={() => (navigation as any).navigate('Main', { screen: 'Settings' })}
         >
-          <Text style={styles.headerBtnText}>⚙</Text>
+          <Feather name="settings" size={20} color={Colors.textSecondary} />
         </TouchableOpacity>
       </View>
 
@@ -194,11 +195,11 @@ const HomeScreen: React.FC = () => {
             return (
               <>
                 <View style={[styles.countBadge, { backgroundColor: Colors.onlineGlow, borderColor: Colors.online }]}>
-                  <Text style={[styles.countText, { color: Colors.online }]}>● {onlineCount} 온라인</Text>
+                  <Text style={[styles.countText, { color: Colors.online }]}><Feather name="check-circle" size={10} />  {onlineCount} 온라인</Text>
                 </View>
                 <View style={[styles.countBadge, { backgroundColor: Colors.offlineGlow, borderColor: Colors.offline }]}>
                   <Text style={[styles.countText, { color: Colors.offline }]}>
-                    ● {servers.length - onlineCount} 오프라인
+                    <Feather name="alert-circle" size={10} />  {servers.length - onlineCount} 오프라인
                   </Text>
                 </View>
               </>
@@ -264,7 +265,7 @@ const HomeScreen: React.FC = () => {
         onPress={() => navigation.navigate('EditServer', {})}
         activeOpacity={0.8}
       >
-        <Text style={styles.fabIcon}>＋</Text>
+        <Feather name="plus" size={28} color="#fff" />
       </TouchableOpacity>
     </View>
   );
@@ -272,13 +273,13 @@ const HomeScreen: React.FC = () => {
 
 const EmptyState: React.FC<{ onAdd: () => void }> = ({ onAdd }) => (
   <View style={styles.emptyContainer}>
-    <Text style={styles.emptyEmoji}>🖥️</Text>
+    <Feather name="server" size={64} color={Colors.textMuted} style={{ marginBottom: Spacing.md }} />
     <Text style={styles.emptyTitle}>서버가 없습니다</Text>
     <Text style={styles.emptyDesc}>
       Oracle Cloud Ubuntu 서버를 추가하여{'\n'}모니터링을 시작하세요
     </Text>
     <TouchableOpacity style={styles.emptyBtn} onPress={onAdd}>
-      <Text style={styles.emptyBtnText}>서버 추가</Text>
+      <Text style={styles.emptyBtnText}>서버 추가하기</Text>
     </TouchableOpacity>
   </View>
 );

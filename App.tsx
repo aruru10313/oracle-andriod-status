@@ -45,6 +45,8 @@ const DarkNavTheme = {
   },
 };
 
+import { Feather } from '@expo/vector-icons';
+
 /** Bottom tab navigator (Home + Settings) */
 function MainTabs() {
   return (
@@ -72,7 +74,7 @@ function MainTabs() {
         options={{
           tabBarLabel: '대시보드',
           tabBarIcon: ({ color }) => (
-            <Text style={{ fontSize: 22, color }}>🖥</Text>
+            <Feather name="server" size={22} color={color} />
           ),
         }}
       />
@@ -82,7 +84,7 @@ function MainTabs() {
         options={{
           tabBarLabel: '설정',
           tabBarIcon: ({ color }) => (
-            <Text style={{ fontSize: 22, color }}>⚙</Text>
+            <Feather name="settings" size={22} color={color} />
           ),
         }}
       />
@@ -142,7 +144,41 @@ export default function App() {
             <Stack.Screen name="EditServer" component={EditServerScreen} />
           </Stack.Navigator>
         </NavigationContainer>
+        <Toast config={toastConfig} />
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }
+
+// ──────────── Custom Toast UI ────────────────────────────────
+import Toast, { BaseToast, ErrorToast, ToastConfig } from 'react-native-toast-message';
+
+const toastConfig: ToastConfig = {
+  success: (props) => (
+    <BaseToast
+      {...props}
+      style={{ borderLeftColor: Colors.online, backgroundColor: Colors.surfaceElevated, borderRadius: 12, borderLeftWidth: 6, marginTop: 10 }}
+      contentContainerStyle={{ paddingHorizontal: 15 }}
+      text1Style={{ fontSize: 16, fontWeight: 'bold', color: Colors.textPrimary }}
+      text2Style={{ fontSize: 13, color: Colors.textSecondary }}
+    />
+  ),
+  error: (props) => (
+    <ErrorToast
+      {...props}
+      style={{ borderLeftColor: Colors.danger, backgroundColor: Colors.surfaceElevated, borderRadius: 12, borderLeftWidth: 6, marginTop: 10 }}
+      contentContainerStyle={{ paddingHorizontal: 15 }}
+      text1Style={{ fontSize: 16, fontWeight: 'bold', color: Colors.textPrimary }}
+      text2Style={{ fontSize: 13, color: Colors.textSecondary }}
+    />
+  ),
+  info: (props) => (
+    <BaseToast
+      {...props}
+      style={{ borderLeftColor: Colors.accent, backgroundColor: Colors.surfaceElevated, borderRadius: 12, borderLeftWidth: 6, marginTop: 10 }}
+      contentContainerStyle={{ paddingHorizontal: 15 }}
+      text1Style={{ fontSize: 16, fontWeight: 'bold', color: Colors.textPrimary }}
+      text2Style={{ fontSize: 13, color: Colors.textSecondary }}
+    />
+  )
+};
