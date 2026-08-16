@@ -415,6 +415,8 @@ const styles = StyleSheet.create({
   ringsRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
     paddingVertical: Spacing.sm,
   },
   metaGrid: {
