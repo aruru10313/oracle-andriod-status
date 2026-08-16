@@ -4,42 +4,42 @@
 
 export const Colors = {
   // Backgrounds
-  background: '#0f1117',
-  surface: '#1a1d2e',
-  surfaceElevated: '#222640',
-  card: '#1a1d2e',
-  cardBorder: '#2a2d42',
+  background: '#000000',
+  surface: '#111111',
+  surfaceElevated: '#1A1A1A',
+  card: '#111111',
+  cardBorder: '#222222',
 
   // Brand
-  accent: '#4f8ef7',
-  accentDark: '#3a6fd4',
+  accent: '#0A84FF',
+  accentDark: '#0066CC',
 
   // Status
-  online: '#22c55e',
-  onlineGlow: 'rgba(34,197,94,0.25)',
-  offline: '#ef4444',
-  offlineGlow: 'rgba(239,68,68,0.25)',
-  warning: '#f59e0b',
-  warningGlow: 'rgba(245,158,11,0.25)',
+  online: '#32D74B',
+  onlineGlow: 'transparent',
+  offline: '#FF453A',
+  offlineGlow: 'transparent',
+  warning: '#FF9F0A',
+  warningGlow: 'transparent',
 
   // Progress rings
-  cpuColor: '#4f8ef7',
-  memoryColor: '#a78bfa',
-  diskColor: '#34d399',
+  cpuColor: '#0A84FF',
+  memoryColor: '#BF5AF2',
+  diskColor: '#30D158',
 
   // Text
-  textPrimary: '#f1f5f9',
-  textSecondary: '#94a3b8',
-  textMuted: '#475569',
+  textPrimary: '#FFFFFF',
+  textSecondary: '#8E8E93',
+  textMuted: '#636366',
 
   // Misc
-  separator: '#1e2132',
-  inputBg: '#0d1020',
-  fab: '#4f8ef7',
-  danger: '#ef4444',
+  separator: '#2C2C2E',
+  inputBg: '#1C1C1E',
+  fab: '#0A84FF',
+  danger: '#FF453A',
 
   // Overlay
-  overlay: 'rgba(0,0,0,0.6)',
+  overlay: 'rgba(0,0,0,0.7)',
 };
 
 export const Spacing = {
@@ -86,7 +86,7 @@ export const Shadow = {
     elevation: 8,
   },
   fab: {
-    shadowColor: '#4f8ef7',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.5,
     shadowRadius: 12,
