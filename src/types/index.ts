@@ -97,10 +97,18 @@ export interface ServerStatus {
 }
 
 // Navigation param lists
+export interface SshConfig {
+  sshHost: string;
+  sshPort: number;
+  sshUser: string;
+  sshKeyContent: string;
+}
+
 export type RootStackParamList = {
   Main: undefined;
   Detail: { server: Server };
   EditServer: { server?: Server };
+  Terminal: { server: Server };
 };
 
 export type BottomTabParamList = {

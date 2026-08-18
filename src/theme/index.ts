@@ -1,45 +1,47 @@
 // ============================================================
 // Dark theme constants for Oracle Monitor App
+// Premium 2025/2026 design system
 // ============================================================
 
 export const Colors = {
   // Backgrounds
-  background: '#000000',
-  surface: '#111111',
-  surfaceElevated: '#1A1A1A',
-  card: '#111111',
-  cardBorder: '#222222',
+  background: '#0D0F14',
+  surface: '#141720',
+  surfaceElevated: '#1C2030',
+  card: '#141720',
+  cardBorder: 'rgba(255,255,255,0.07)',
 
   // Brand
-  accent: '#0A84FF',
-  accentDark: '#0066CC',
+  accent: '#06B6D4',
+  accentSecondary: '#3B82F6',
+  accentDark: '#0891B2',
 
   // Status
-  online: '#32D74B',
-  onlineGlow: 'transparent',
-  offline: '#FF453A',
-  offlineGlow: 'transparent',
-  warning: '#FF9F0A',
-  warningGlow: 'transparent',
+  online: '#10B981',
+  onlineGlow: 'rgba(16,185,129,0.12)',
+  offline: '#EF4444',
+  offlineGlow: 'rgba(239,68,68,0.12)',
+  warning: '#F59E0B',
+  warningGlow: 'rgba(245,158,11,0.12)',
 
-  // Progress rings
-  cpuColor: '#0A84FF',
-  memoryColor: '#BF5AF2',
-  diskColor: '#30D158',
+  // Progress rings / bars
+  cpuColor: '#3B82F6',
+  memoryColor: '#8B5CF6',
+  diskColor: '#06B6D4',
 
   // Text
-  textPrimary: '#FFFFFF',
-  textSecondary: '#8E8E93',
-  textMuted: '#636366',
+  textPrimary: '#F1F5F9',
+  textSecondary: '#94A3B8',
+  textMuted: '#475569',
 
   // Misc
-  separator: '#2C2C2E',
-  inputBg: '#1C1C1E',
-  fab: '#0A84FF',
-  danger: '#FF453A',
+  separator: 'rgba(255,255,255,0.06)',
+  inputBg: '#1C2030',
+  fab: '#06B6D4',
+  danger: '#EF4444',
 
   // Overlay
-  overlay: 'rgba(0,0,0,0.7)',
+  overlay: 'rgba(0,0,0,0.75)',
 };
 
 export const Spacing = {
@@ -80,16 +82,16 @@ export const FontWeight = {
 export const Shadow = {
   card: {
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 10,
   },
   fab: {
-    shadowColor: '#000',
+    shadowColor: '#06B6D4',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 12,
-    elevation: 12,
+    shadowOpacity: 0.45,
+    shadowRadius: 16,
+    elevation: 14,
   },
 };

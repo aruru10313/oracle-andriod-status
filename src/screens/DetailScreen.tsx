@@ -1,5 +1,7 @@
 // ============================================================
 // DetailScreen — in-depth server stats view
+// Premium 2025/2026 redesign: refined nav bar, consistent
+// card styling, premium section headers with accent dots
 // ============================================================
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -105,28 +107,44 @@ const DetailScreen: React.FC = () => {
     ]);
   };
 
+  const isOnline = stats?.online ?? false;
+
   return (
     <View style={styles.root}>
       {/* Nav bar */}
       <View style={styles.navBar}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backIcon}>←</Text>
+          <Text style={styles.backIcon}>‹</Text>
         </TouchableOpacity>
+
         <View style={{ flex: 1 }}>
           <Text style={styles.navTitle} numberOfLines={1}>{server.name}</Text>
           {stats && (
-            <Text style={styles.navSub}>
-              {stats.online ? '🟢 온라인' : '🔴 오프라인'} · {stats.hostname}
-            </Text>
+            <View style={styles.navStatusRow}>
+              <View style={[styles.navDot, { backgroundColor: isOnline ? Colors.online : Colors.offline }]} />
+              <Text style={styles.navSub}>
+                {isOnline ? '온라인' : '오프라인'}{stats.hostname ? ` · ${stats.hostname}` : ''}
+              </Text>
+            </View>
           )}
         </View>
+
         <TouchableOpacity onPress={() => navigation.navigate('EditServer', { server })} style={styles.editBtn}>
           <Text style={styles.editBtnText}>편집</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('Terminal', { server })}
+          style={styles.termBtn}
+        >
+          <Text style={styles.termBtnText}>SSH</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={handleDelete} style={styles.deleteBtn}>
           <Text style={styles.deleteBtnText}>삭제</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Accent separator */}
+      <View style={styles.navAccentLine} />
 
       <ScrollView
         style={styles.scroll}
@@ -137,23 +155,29 @@ const DetailScreen: React.FC = () => {
             onRefresh={onRefresh}
             tintColor={Colors.accent}
             colors={[Colors.accent]}
-            progressBackgroundColor={Colors.surface}
+            progressBackgroundColor={Colors.surfaceElevated}
           />
         }
       >
+        {/* Error banner */}
         {error && (
           <View style={styles.errorBox}>
-            <Text style={styles.errorTitle}>⚠️ 연결 오류</Text>
-            <Text style={styles.errorMsg}>{error}</Text>
+            <View style={styles.errorIconWrapper}>
+              <Text style={styles.errorIconText}>!</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.errorTitle}>연결 오류</Text>
+              <Text style={styles.errorMsg}>{error}</Text>
+            </View>
             <TouchableOpacity onPress={loadAll} style={styles.retryBtn}>
-              <Text style={styles.retryText}>다시 시도</Text>
+              <Text style={styles.retryText}>재시도</Text>
             </TouchableOpacity>
           </View>
         )}
 
         {stats && (
           <>
-            {/* Main metrics ring row */}
+            {/* System resource rings */}
             <View style={styles.card}>
               <SectionTitle>시스템 자원</SectionTitle>
               <View style={styles.ringsRow}>
@@ -183,7 +207,7 @@ const DetailScreen: React.FC = () => {
                 label="사용률"
                 value={stats.memoryPercent}
                 color={Colors.memoryColor}
-                subLabel={`${(stats.memoryUsedMB / 1024).toFixed(1)} GB / ${(stats.memoryTotalMB / 1024).toFixed(1)} GB`}
+                subLabel={`${(stats.memoryUsedMB / 1024).toFixed(1)} / ${(stats.memoryTotalMB / 1024).toFixed(1)} GB`}
               />
             </View>
 
@@ -194,7 +218,7 @@ const DetailScreen: React.FC = () => {
                 label="사용률"
                 value={stats.swapPercent}
                 color={Colors.memoryColor}
-                subLabel={`${(stats.swapUsedMB / 1024).toFixed(1)} GB / ${(stats.swapTotalMB / 1024).toFixed(1)} GB`}
+                subLabel={`${(stats.swapUsedMB / 1024).toFixed(1)} / ${(stats.swapTotalMB / 1024).toFixed(1)} GB`}
               />
             </View>
 
@@ -205,7 +229,7 @@ const DetailScreen: React.FC = () => {
                 label="사용률"
                 value={stats.diskPercent}
                 color={Colors.diskColor}
-                subLabel={`${stats.diskUsedGB.toFixed(1)} GB / ${stats.diskTotalGB.toFixed(1)} GB`}
+                subLabel={`${stats.diskUsedGB.toFixed(1)} / ${stats.diskTotalGB.toFixed(1)} GB`}
               />
             </View>
 
@@ -252,9 +276,11 @@ const DetailScreen: React.FC = () => {
                       <View key={idx} style={[styles.portCard, { borderLeftColor: isOpen ? Colors.online : Colors.offline }]}>
                         <View style={styles.portHeader}>
                           <Text style={styles.portName}>{p.name} <Text style={styles.portProto}>{p.protocol.toUpperCase()}</Text></Text>
-                          <Text style={[styles.portStatusText, { color: isOpen ? Colors.online : Colors.offline }]}>
-                            {isOpen === undefined ? '확인 중...' : isOpen ? '🟢 열림' : '🔴 닫힘'}
-                          </Text>
+                          <View style={[styles.portStatusBadge, { backgroundColor: isOpen ? Colors.onlineGlow : Colors.offlineGlow, borderColor: isOpen ? Colors.online : Colors.offline }]}>
+                            <Text style={[styles.portStatusText, { color: isOpen ? Colors.online : Colors.offline }]}>
+                              {isOpen === undefined ? '확인 중...' : isOpen ? 'OPEN' : 'CLOSED'}
+                            </Text>
+                          </View>
                         </View>
                         <Text style={styles.portValue}>{p.port}</Text>
                       </View>
@@ -297,11 +323,37 @@ const DetailScreen: React.FC = () => {
   );
 };
 
-// ──────── Sub-components ────────
+// ──── Sub-components ────────────────────────────────────────
 
 const SectionTitle: React.FC<{ children: React.ReactNode; style?: object }> = ({ children, style }) => (
-  <Text style={[styles.sectionTitle, style]}>{children}</Text>
+  <View style={[stStyles.row, style]}>
+    <View style={stStyles.dot} />
+    <Text style={stStyles.text}>{children}</Text>
+  </View>
 );
+
+const stStyles = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+    gap: 6,
+  },
+  dot: {
+    width: 3,
+    height: 14,
+    borderRadius: 2,
+    backgroundColor: Colors.accent,
+    opacity: 0.8,
+  },
+  text: {
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.bold,
+    color: Colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+});
 
 const MetaItem: React.FC<{ label: string; value: string }> = ({ label, value }) => (
   <View style={styles.metaItem}>
@@ -325,7 +377,7 @@ const Sparkline: React.FC<{ data: number[]; color: string }> = ({ data, color })
     <View style={styles.sparklineContainer}>
       <Svg width={w} height={h}>
         {/* 50% guide line */}
-        <Line x1={0} y1={h / 2} x2={w} y2={h / 2} stroke={Colors.surfaceElevated} strokeWidth={1} strokeDasharray="4 4" />
+        <Line x1={0} y1={h / 2} x2={w} y2={h / 2} stroke={Colors.separator} strokeWidth={1} strokeDasharray="4 4" />
         <Polyline points={points} fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
       </Svg>
       <View style={styles.sparklineLabels}>
@@ -336,11 +388,14 @@ const Sparkline: React.FC<{ data: number[]; color: string }> = ({ data, color })
   );
 };
 
+// ──── Styles ────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: Colors.background,
   },
+  // Nav bar
   navBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -348,32 +403,57 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.sm,
     paddingHorizontal: Spacing.md,
     backgroundColor: Colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.separator,
     gap: Spacing.sm,
   },
+  navAccentLine: {
+    height: 1,
+    backgroundColor: Colors.separator,
+  },
   backBtn: {
-    padding: Spacing.xs,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.surfaceElevated,
+    borderWidth: 1,
+    borderColor: Colors.cardBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   backIcon: {
-    fontSize: 24,
+    fontSize: 22,
     color: Colors.accent,
+    fontWeight: FontWeight.bold,
+    lineHeight: 24,
+    marginTop: -1,
   },
   navTitle: {
     fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
     color: Colors.textPrimary,
+    letterSpacing: -0.3,
+  },
+  navStatusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginTop: 2,
+  },
+  navDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   navSub: {
     fontSize: FontSize.xs,
     color: Colors.textMuted,
-    marginTop: 1,
   },
   editBtn: {
     paddingHorizontal: Spacing.sm,
     paddingVertical: 6,
     borderRadius: BorderRadius.sm,
     backgroundColor: Colors.surfaceElevated,
+    borderWidth: 1,
+    borderColor: Colors.cardBorder,
   },
   editBtnText: {
     color: Colors.accent,
@@ -384,10 +464,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.sm,
     paddingVertical: 6,
     borderRadius: BorderRadius.sm,
-    backgroundColor: 'rgba(239,68,68,0.15)',
+    backgroundColor: 'rgba(239,68,68,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(239,68,68,0.25)',
   },
   deleteBtnText: {
     color: Colors.danger,
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
+  },
+  termBtn: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 6,
+    borderRadius: BorderRadius.sm,
+    backgroundColor: 'rgba(6,182,212,0.12)',
+  },
+  termBtnText: {
+    color: '#06B6D4',
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
   },
@@ -395,6 +488,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: Spacing.md,
   },
+  // Card
   card: {
     backgroundColor: Colors.card,
     borderRadius: BorderRadius.lg,
@@ -405,11 +499,11 @@ const styles = StyleSheet.create({
     ...Shadow.card,
   },
   sectionTitle: {
-    fontSize: FontSize.sm,
+    fontSize: FontSize.xs,
     fontWeight: FontWeight.bold,
     color: Colors.textSecondary,
     textTransform: 'uppercase',
-    letterSpacing: 0.8,
+    letterSpacing: 1,
     marginBottom: Spacing.md,
   },
   ringsRow: {
@@ -432,40 +526,44 @@ const styles = StyleSheet.create({
   metaLabel: {
     fontSize: FontSize.xs,
     color: Colors.textMuted,
-    marginBottom: 2,
+    marginBottom: 3,
+    letterSpacing: 0.3,
   },
   metaValue: {
     fontSize: FontSize.md,
     color: Colors.textPrimary,
     fontWeight: FontWeight.semibold,
+    letterSpacing: 0.1,
   },
+  // Sparkline
   sparklineContainer: {
     flexDirection: 'row',
     alignItems: 'stretch',
   },
   sparklineLabels: {
     justifyContent: 'space-between',
-    paddingLeft: 4,
+    paddingLeft: 6,
   },
   sparklineLabel: {
     fontSize: FontSize.xs,
     color: Colors.textMuted,
   },
+  // Process list
   processHeader: {
     flexDirection: 'row',
-    paddingVertical: 4,
+    paddingVertical: 6,
     borderBottomWidth: 1,
     borderBottomColor: Colors.separator,
     marginBottom: 4,
   },
   processRow: {
     flexDirection: 'row',
-    paddingVertical: 6,
+    paddingVertical: 7,
     borderRadius: BorderRadius.sm,
     paddingHorizontal: 4,
   },
   processRowAlt: {
-    backgroundColor: Colors.inputBg,
+    backgroundColor: 'rgba(255,255,255,0.025)',
   },
   processCol: {
     flex: 1,
@@ -477,37 +575,56 @@ const styles = StyleSheet.create({
     flex: 2,
     textAlign: 'left',
   },
+  // Error box
   errorBox: {
-    backgroundColor: 'rgba(239,68,68,0.1)',
+    backgroundColor: 'rgba(239,68,68,0.08)',
     borderRadius: BorderRadius.md,
     borderWidth: 1,
-    borderColor: Colors.offline,
+    borderColor: 'rgba(239,68,68,0.2)',
     padding: Spacing.md,
     marginBottom: Spacing.md,
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  errorIconWrapper: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: Colors.offlineGlow,
+    borderWidth: 1,
+    borderColor: Colors.offline,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  errorIconText: {
+    fontSize: 16,
+    color: Colors.offline,
+    fontWeight: FontWeight.bold,
+    lineHeight: 18,
   },
   errorTitle: {
-    fontSize: FontSize.md,
+    fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
     color: Colors.offline,
-    marginBottom: Spacing.xs,
+    marginBottom: 2,
   },
   errorMsg: {
-    fontSize: FontSize.sm,
+    fontSize: FontSize.xs,
     color: Colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: Spacing.md,
   },
   retryBtn: {
     backgroundColor: Colors.accent,
-    paddingHorizontal: Spacing.lg,
+    paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.full,
+    borderRadius: BorderRadius.md,
   },
   retryText: {
     color: '#fff',
     fontWeight: FontWeight.semibold,
+    fontSize: FontSize.xs,
   },
+  // Ports
   portsGrid: {
     gap: Spacing.sm,
   },
@@ -533,15 +650,22 @@ const styles = StyleSheet.create({
     fontSize: FontSize.xs,
     marginLeft: 4,
   },
+  portStatusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1,
+  },
+  portStatusText: {
+    fontSize: 10,
+    fontWeight: FontWeight.bold,
+    letterSpacing: 0.8,
+  },
   portValue: {
     color: Colors.textSecondary,
     fontSize: FontSize.lg,
     fontWeight: 'bold',
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
-  },
-  portStatusText: {
-    fontSize: FontSize.xs,
-    fontWeight: 'bold',
   },
 });
 

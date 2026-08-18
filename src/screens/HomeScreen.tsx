@@ -1,5 +1,7 @@
 // ============================================================
-// HomeScreen — main dashboard with swipeable server cards
+// HomeScreen — main dashboard with server cards
+// Premium 2025/2026 redesign: clean header, gradient accent,
+// better empty state, styled refresh control
 // ============================================================
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -167,6 +169,10 @@ const HomeScreen: React.FC = () => {
     ? lastUpdated.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
     : null;
 
+  // Count online/offline servers
+  const onlineCount = Object.values(statsMap).filter((s) => s.online).length;
+  const offlineCount = servers.length - onlineCount;
+
   return (
     <View style={styles.root}>
       <StatusBar barStyle="light-content" backgroundColor={Colors.background} />
@@ -176,39 +182,37 @@ const HomeScreen: React.FC = () => {
         <View>
           <Text style={styles.headerTitle}>오라클 모니터</Text>
           {formattedTime && (
-            <Text style={styles.headerSub}>마지막 업데이트: {formattedTime}</Text>
+            <Text style={styles.headerSub}>업데이트: {formattedTime}</Text>
           )}
         </View>
         <TouchableOpacity
           style={styles.headerBtn}
           onPress={() => (navigation as any).navigate('Main', { screen: 'Settings' })}
         >
-          <Feather name="settings" size={20} color={Colors.textSecondary} />
+          <Feather name="settings" size={18} color={Colors.textSecondary} />
         </TouchableOpacity>
       </View>
 
-      {/* Server count badge */}
+      {/* Gradient accent line under header */}
+      <View style={styles.headerAccentLine} />
+
+      {/* Server count badges */}
       {servers.length > 0 && (
         <View style={styles.countRow}>
-          {(() => {
-            const onlineCount = Object.values(statsMap).filter((s) => s.online).length;
-            return (
-              <>
-                <View style={[styles.countBadge, { backgroundColor: Colors.onlineGlow, borderColor: Colors.online }]}>
-                  <Text style={[styles.countText, { color: Colors.online }]}><Feather name="check-circle" size={10} />  {onlineCount} 온라인</Text>
-                </View>
-                <View style={[styles.countBadge, { backgroundColor: Colors.offlineGlow, borderColor: Colors.offline }]}>
-                  <Text style={[styles.countText, { color: Colors.offline }]}>
-                    <Feather name="alert-circle" size={10} />  {servers.length - onlineCount} 오프라인
-                  </Text>
-                </View>
-              </>
-            );
-          })()}
+          <View style={[styles.countBadge, { backgroundColor: Colors.onlineGlow, borderColor: Colors.online }]}>
+            <View style={styles.countDot} />
+            <Text style={[styles.countText, { color: Colors.online }]}>{onlineCount} 온라인</Text>
+          </View>
+          {offlineCount > 0 && (
+            <View style={[styles.countBadge, { backgroundColor: Colors.offlineGlow, borderColor: Colors.offline }]}>
+              <View style={[styles.countDot, { backgroundColor: Colors.offline }]} />
+              <Text style={[styles.countText, { color: Colors.offline }]}>{offlineCount} 오프라인</Text>
+            </View>
+          )}
         </View>
       )}
 
-      {/* Swipeable server cards */}
+      {/* Server cards list */}
       {servers.length === 0 ? (
         <EmptyState onAdd={() => navigation.navigate('EditServer', {})} />
       ) : (
@@ -228,7 +232,7 @@ const HomeScreen: React.FC = () => {
               onRefresh={onRefresh}
               tintColor={Colors.accent}
               colors={[Colors.accent]}
-              progressBackgroundColor={Colors.surface}
+              progressBackgroundColor={Colors.surfaceElevated}
             />
           }
           renderItem={({ item }) => (
@@ -251,8 +255,8 @@ const HomeScreen: React.FC = () => {
               style={[
                 styles.dot,
                 i === activeIndex
-                  ? { backgroundColor: Colors.accent, width: 18 }
-                  : { backgroundColor: Colors.textMuted, width: 7 },
+                  ? { backgroundColor: Colors.accent, width: 20 }
+                  : { backgroundColor: Colors.textMuted, width: 6 },
               ]}
             />
           ))}
@@ -265,30 +269,39 @@ const HomeScreen: React.FC = () => {
         onPress={() => navigation.navigate('EditServer', {})}
         activeOpacity={0.8}
       >
-        <Feather name="plus" size={28} color="#fff" />
+        <Feather name="plus" size={26} color="#fff" />
       </TouchableOpacity>
     </View>
   );
 };
 
+// ── Empty State ───────────────────────────────────────────────
+
 const EmptyState: React.FC<{ onAdd: () => void }> = ({ onAdd }) => (
   <View style={styles.emptyContainer}>
-    <Feather name="server" size={64} color={Colors.textMuted} style={{ marginBottom: Spacing.md }} />
+    {/* Glassy icon container */}
+    <View style={styles.emptyIconWrapper}>
+      <Feather name="server" size={36} color={Colors.accent} />
+    </View>
     <Text style={styles.emptyTitle}>서버가 없습니다</Text>
     <Text style={styles.emptyDesc}>
       Oracle Cloud Ubuntu 서버를 추가하여{'\n'}모니터링을 시작하세요
     </Text>
-    <TouchableOpacity style={styles.emptyBtn} onPress={onAdd}>
+    <TouchableOpacity style={styles.emptyBtn} onPress={onAdd} activeOpacity={0.85}>
+      <Feather name="plus" size={16} color="#fff" style={{ marginRight: 6 }} />
       <Text style={styles.emptyBtnText}>서버 추가하기</Text>
     </TouchableOpacity>
   </View>
 );
+
+// ── Styles ────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: Colors.background,
   },
+  // ── Header
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -301,18 +314,21 @@ const styles = StyleSheet.create({
     fontSize: FontSize.xxl,
     fontWeight: FontWeight.extrabold,
     color: Colors.textPrimary,
-    letterSpacing: -0.5,
+    letterSpacing: -0.8,
   },
   headerSub: {
     fontSize: FontSize.xs,
     color: Colors.textMuted,
-    marginTop: 2,
+    marginTop: 3,
+    letterSpacing: 0.2,
   },
   headerBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.surface,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: Colors.surfaceElevated,
+    borderWidth: 1,
+    borderColor: Colors.cardBorder,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -320,6 +336,16 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: Colors.textSecondary,
   },
+  // Gradient accent bar below header
+  headerAccentLine: {
+    height: 1,
+    marginHorizontal: Spacing.md,
+    backgroundColor: Colors.separator,
+    marginBottom: Spacing.sm,
+    // Simulate gradient with a centered brighter spot via border trick
+    borderRadius: 1,
+  },
+  // ── Count badges
   countRow: {
     flexDirection: 'row',
     paddingHorizontal: Spacing.md,
@@ -327,19 +353,31 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   countBadge: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 3,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     borderRadius: BorderRadius.full,
     borderWidth: 1,
+    gap: 5,
+  },
+  countDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: Colors.online,
   },
   countText: {
     fontSize: FontSize.xs,
     fontWeight: FontWeight.semibold,
+    letterSpacing: 0.3,
   },
+  // ── List
   listContent: {
     paddingBottom: 100,
     paddingTop: Spacing.xs,
   },
+  // ── Page dots
   dotsRow: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -351,16 +389,17 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   dot: {
-    height: 7,
-    borderRadius: 4,
+    height: 6,
+    borderRadius: 3,
   },
+  // ── FAB
   fab: {
     position: 'absolute',
     right: Spacing.lg,
     bottom: Spacing.xl,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 54,
+    height: 54,
+    borderRadius: 27,
     backgroundColor: Colors.fab,
     alignItems: 'center',
     justifyContent: 'center',
@@ -371,6 +410,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     lineHeight: 30,
   },
+  // ── Empty state
   emptyContainer: {
     flex: 1,
     alignItems: 'center',
@@ -381,11 +421,23 @@ const styles = StyleSheet.create({
     fontSize: 64,
     marginBottom: Spacing.md,
   },
+  emptyIconWrapper: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(6,182,212,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(6,182,212,0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.lg,
+  },
   emptyTitle: {
     fontSize: FontSize.xl,
     fontWeight: FontWeight.bold,
     color: Colors.textPrimary,
     marginBottom: Spacing.sm,
+    letterSpacing: -0.3,
   },
   emptyDesc: {
     fontSize: FontSize.md,
@@ -395,10 +447,13 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xl,
   },
   emptyBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: Colors.accent,
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm + 2,
     borderRadius: BorderRadius.full,
+    ...Shadow.fab,
   },
   emptyBtnText: {
     color: '#fff',

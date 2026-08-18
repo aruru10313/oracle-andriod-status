@@ -1,5 +1,7 @@
 // ============================================================
 // SettingsScreen — server management + app settings
+// Premium 2025/2026 redesign: iOS-style grouped rows,
+// better section headers, refined action buttons
 // ============================================================
 
 import React, { useCallback, useEffect, useState } from 'react';
@@ -142,72 +144,85 @@ const SettingsScreen: React.FC = () => {
 
   return (
     <View style={styles.root}>
+      {/* Nav bar */}
       <View style={styles.navBar}>
         <Text style={styles.navTitle}>설정</Text>
         <TouchableOpacity
           style={styles.addBtn}
           onPress={() => navigation.navigate('EditServer', {})}
         >
-          <Text style={styles.addBtnText}>+ 서버 추가</Text>
+          <Feather name="plus" size={14} color="#fff" style={{ marginRight: 4 }} />
+          <Text style={styles.addBtnText}>서버 추가</Text>
         </TouchableOpacity>
       </View>
+      {/* Accent separator */}
+      <View style={styles.navAccentLine} />
 
       <ScrollView contentContainerStyle={styles.content}>
 
         {/* ── Servers ── */}
-        <SectionHeader>서버 목록</SectionHeader>
+        <SectionHeader icon="server">서버 목록</SectionHeader>
 
         {servers.length === 0 ? (
           <View style={styles.emptyServers}>
+            <Feather name="server" size={28} color={Colors.textMuted} style={{ marginBottom: 8 }} />
             <Text style={styles.emptyText}>서버가 없습니다. 서버를 추가해 주세요.</Text>
           </View>
         ) : (
-          servers.map((server) => (
-            <View key={server.id} style={styles.serverRow}>
-              <View style={styles.serverInfo}>
-                <Text style={styles.serverName} numberOfLines={1}>{server.name}</Text>
-                <Text style={styles.serverUrl} numberOfLines={1}>{server.url}</Text>
+          <View style={styles.groupCard}>
+            {servers.map((server, idx) => (
+              <View key={server.id}>
+                <View style={styles.serverRow}>
+                  {/* Online indicator dot */}
+                  <View style={[styles.serverDot, { backgroundColor: server.enabled ? Colors.online : Colors.textMuted }]} />
+                  <View style={styles.serverInfo}>
+                    <Text style={styles.serverName} numberOfLines={1}>{server.name}</Text>
+                    <Text style={styles.serverUrl} numberOfLines={1}>{server.url}</Text>
+                  </View>
+
+                  <View style={styles.serverActions}>
+                    {/* Test connection */}
+                    <TouchableOpacity
+                      style={styles.actionBtn}
+                      onPress={() => testConnection(server)}
+                      disabled={testingServer === server.id}
+                    >
+                      <Text style={styles.actionBtnText}>
+                        {testingServer === server.id ? '…' : '테스트'}
+                      </Text>
+                    </TouchableOpacity>
+
+                    {/* Edit */}
+                    <TouchableOpacity
+                      style={styles.actionBtn}
+                      onPress={() => navigation.navigate('EditServer', { server })}
+                    >
+                      <Text style={styles.actionBtnText}>편집</Text>
+                    </TouchableOpacity>
+
+                    {/* Delete */}
+                    <TouchableOpacity onPress={() => deleteServer(server)} style={styles.deleteBtn}>
+                      <Feather name="trash-2" size={14} color={Colors.danger} />
+                    </TouchableOpacity>
+
+                    {/* Enable toggle */}
+                    <Switch
+                      value={server.enabled}
+                      onValueChange={() => toggleServer(server)}
+                      trackColor={{ false: Colors.surfaceElevated, true: Colors.accentDark }}
+                      thumbColor={server.enabled ? Colors.accent : Colors.textMuted}
+                    />
+                  </View>
+                </View>
+                {/* Divider between server rows (not last) */}
+                {idx < servers.length - 1 && <View style={styles.rowDivider} />}
               </View>
-
-              <View style={styles.serverActions}>
-                {/* Test connection */}
-                <TouchableOpacity
-                  style={styles.actionBtn}
-                  onPress={() => testConnection(server)}
-                  disabled={testingServer === server.id}
-                >
-                  <Text style={styles.actionBtnText}>
-                    {testingServer === server.id ? '…' : '테스트'}
-                  </Text>
-                </TouchableOpacity>
-
-                {/* Edit */}
-                <TouchableOpacity
-                  style={styles.actionBtn}
-                  onPress={() => navigation.navigate('EditServer', { server })}
-                >
-                  <Text style={styles.actionBtnText}>편집</Text>
-                </TouchableOpacity>
-
-                {/* Delete */}
-                <TouchableOpacity onPress={() => deleteServer(server)}>
-                  <Text style={styles.deleteText}>삭제</Text>
-                </TouchableOpacity>
-
-                {/* Enable toggle */}
-                <Switch
-                  value={server.enabled}
-                  onValueChange={() => toggleServer(server)}
-                  trackColor={{ false: Colors.surfaceElevated, true: Colors.onlineGlow }}
-                  thumbColor={server.enabled ? Colors.online : Colors.textMuted}
-                />
-              </View>
-            </View>
-          ))
+            ))}
+          </View>
         )}
 
         {/* ── Polling ── */}
-        <SectionHeader>폴링 설정</SectionHeader>
+        <SectionHeader icon="clock">폴링 설정</SectionHeader>
         <View style={styles.card}>
           <Text style={styles.settingLabel}>폴링 주기</Text>
           <View style={styles.intervalRow}>
@@ -234,8 +249,8 @@ const SettingsScreen: React.FC = () => {
         </View>
 
         {/* ── Notifications ── */}
-        <SectionHeader>알림 설정</SectionHeader>
-        <View style={styles.card}>
+        <SectionHeader icon="bell">알림 설정</SectionHeader>
+        <View style={styles.groupCard}>
           <ToggleRow
             label="알림 활성화"
             value={settings.notificationsEnabled}
@@ -258,11 +273,12 @@ const SettingsScreen: React.FC = () => {
         </View>
 
         {/* ── Thresholds ── */}
-        <SectionHeader>경고 임계값</SectionHeader>
-        <View style={styles.card}>
+        <SectionHeader icon="alert-triangle">경고 임계값</SectionHeader>
+        <View style={styles.groupCard}>
           <ThresholdRow
             label="CPU 경고 (%)"
             value={settings.cpuAlertThreshold}
+            color={Colors.cpuColor}
             onDecrease={() =>
               persistSettings({
                 ...settings,
@@ -280,6 +296,7 @@ const SettingsScreen: React.FC = () => {
           <ThresholdRow
             label="메모리 경고 (%)"
             value={settings.memoryAlertThreshold}
+            color={Colors.memoryColor}
             onDecrease={() =>
               persistSettings({
                 ...settings,
@@ -297,6 +314,7 @@ const SettingsScreen: React.FC = () => {
           <ThresholdRow
             label="디스크 경고 (%)"
             value={settings.diskAlertThreshold}
+            color={Colors.diskColor}
             onDecrease={() =>
               persistSettings({
                 ...settings,
@@ -313,17 +331,19 @@ const SettingsScreen: React.FC = () => {
         </View>
 
         {/* ── Backup & Restore ── */}
-        <SectionHeader>데이터 백업 및 복원</SectionHeader>
+        <SectionHeader icon="database">데이터 백업 및 복원</SectionHeader>
         <View style={styles.card}>
-          <Text style={{ color: Colors.textSecondary, fontSize: FontSize.sm, marginBottom: Spacing.md, lineHeight: 18 }}>
+          <Text style={styles.backupDesc}>
             앱을 삭제하거나 업데이트하기 전에 설정을 백업해두면 다시 설치했을 때 그대로 복원할 수 있습니다.
           </Text>
-          <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
+          <View style={styles.backupRow}>
             <TouchableOpacity style={styles.backupBtn} onPress={exportSettings}>
-              <Text style={styles.backupBtnText}><Feather name="upload" size={14} /> 백업 저장</Text>
+              <Feather name="upload" size={14} color={Colors.textPrimary} />
+              <Text style={styles.backupBtnText}>백업 저장</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.restoreBtn} onPress={importSettings}>
-              <Text style={styles.restoreBtnText}><Feather name="download" size={14} /> 설정 불러오기</Text>
+              <Feather name="download" size={14} color="#fff" />
+              <Text style={styles.restoreBtnText}>설정 불러오기</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -334,10 +354,13 @@ const SettingsScreen: React.FC = () => {
   );
 };
 
-// ──── Sub components ────
+// ──── Sub components ────────────────────────────────────────
 
-const SectionHeader: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <Text style={styles.sectionHeader}>{children}</Text>
+const SectionHeader: React.FC<{ children: React.ReactNode; icon?: string }> = ({ children, icon }) => (
+  <View style={styles.sectionHeaderRow}>
+    {icon && <Feather name={icon as any} size={11} color={Colors.accent} style={{ opacity: 0.8 }} />}
+    <Text style={styles.sectionHeader}>{children}</Text>
+  </View>
 );
 
 const Divider = () => <View style={styles.divider} />;
@@ -363,16 +386,17 @@ const ToggleRow: React.FC<{
 const ThresholdRow: React.FC<{
   label: string;
   value: number;
+  color?: string;
   onDecrease: () => void;
   onIncrease: () => void;
-}> = ({ label, value, onDecrease, onIncrease }) => (
+}> = ({ label, value, color, onDecrease, onIncrease }) => (
   <View style={styles.thresholdRow}>
     <Text style={styles.toggleLabel}>{label}</Text>
     <View style={styles.stepperRow}>
       <TouchableOpacity style={styles.stepBtn} onPress={onDecrease}>
         <Text style={styles.stepBtnText}>−</Text>
       </TouchableOpacity>
-      <Text style={styles.stepValue}>{value}%</Text>
+      <Text style={[styles.stepValue, color ? { color } : {}]}>{value}%</Text>
       <TouchableOpacity style={styles.stepBtn} onPress={onIncrease}>
         <Text style={styles.stepBtnText}>+</Text>
       </TouchableOpacity>
@@ -380,11 +404,14 @@ const ThresholdRow: React.FC<{
   </View>
 );
 
+// ──── Styles ────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: Colors.background,
   },
+  // Nav
   navBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -393,19 +420,25 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.sm,
     paddingHorizontal: Spacing.md,
     backgroundColor: Colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.separator,
+  },
+  navAccentLine: {
+    height: 1,
+    backgroundColor: Colors.separator,
   },
   navTitle: {
     fontSize: FontSize.xl,
     fontWeight: FontWeight.bold,
     color: Colors.textPrimary,
+    letterSpacing: -0.3,
   },
   addBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: Colors.accent,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.full,
+    ...Shadow.fab,
   },
   addBtnText: {
     color: '#fff',
@@ -415,15 +448,31 @@ const styles = StyleSheet.create({
   content: {
     padding: Spacing.md,
   },
+  // Section header
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginTop: Spacing.lg,
+    marginBottom: Spacing.sm,
+    paddingHorizontal: Spacing.xs,
+  },
   sectionHeader: {
     fontSize: FontSize.xs,
     fontWeight: FontWeight.bold,
     color: Colors.textMuted,
     textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginTop: Spacing.lg,
+    letterSpacing: 1.2,
+  },
+  // Grouped iOS-style card (no internal padding — rows have their own)
+  groupCard: {
+    backgroundColor: Colors.card,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    borderColor: Colors.cardBorder,
+    overflow: 'hidden',
     marginBottom: Spacing.sm,
-    paddingHorizontal: Spacing.xs,
+    ...Shadow.card,
   },
   card: {
     backgroundColor: Colors.card,
@@ -434,9 +483,10 @@ const styles = StyleSheet.create({
     ...Shadow.card,
     marginBottom: Spacing.sm,
   },
+  // Empty servers
   emptyServers: {
     backgroundColor: Colors.card,
-    borderRadius: BorderRadius.md,
+    borderRadius: BorderRadius.lg,
     padding: Spacing.xl,
     alignItems: 'center',
     borderWidth: 1,
@@ -446,18 +496,21 @@ const styles = StyleSheet.create({
   emptyText: {
     color: Colors.textMuted,
     fontSize: FontSize.sm,
+    textAlign: 'center',
   },
+  // Server row (inside groupCard)
   serverRow: {
-    backgroundColor: Colors.card,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1,
-    borderColor: Colors.cardBorder,
-    padding: Spacing.md,
-    marginBottom: Spacing.sm,
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
     gap: Spacing.sm,
-    ...Shadow.card,
+  },
+  serverDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    flexShrink: 0,
   },
   serverInfo: {
     flex: 1,
@@ -467,6 +520,7 @@ const styles = StyleSheet.create({
     fontSize: FontSize.md,
     fontWeight: FontWeight.semibold,
     color: Colors.textPrimary,
+    letterSpacing: 0.1,
   },
   serverUrl: {
     fontSize: FontSize.xs,
@@ -483,17 +537,30 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: BorderRadius.sm,
     backgroundColor: Colors.surfaceElevated,
+    borderWidth: 1,
+    borderColor: Colors.cardBorder,
   },
   actionBtnText: {
     fontSize: FontSize.xs,
     color: Colors.accent,
     fontWeight: FontWeight.semibold,
   },
+  deleteBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: Colors.offlineGlow,
+    borderWidth: 1,
+    borderColor: 'rgba(239,68,68,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   deleteText: {
     fontSize: FontSize.xs,
     color: Colors.danger,
     fontWeight: FontWeight.semibold,
   },
+  // Polling
   settingLabel: {
     fontSize: FontSize.md,
     color: Colors.textSecondary,
@@ -526,22 +593,28 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: FontWeight.bold,
   },
+  // Toggle row (inside groupCard — has its own horizontal padding)
   toggleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    minHeight: 48,
   },
   toggleLabel: {
     fontSize: FontSize.md,
     color: Colors.textSecondary,
     flex: 1,
   },
+  // Threshold row
   thresholdRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    minHeight: 48,
   },
   stepperRow: {
     flexDirection: 'row',
@@ -553,6 +626,8 @@ const styles = StyleSheet.create({
     height: 32,
     borderRadius: 16,
     backgroundColor: Colors.surfaceElevated,
+    borderWidth: 1,
+    borderColor: Colors.cardBorder,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -569,17 +644,37 @@ const styles = StyleSheet.create({
     minWidth: 48,
     textAlign: 'center',
   },
+  // Divider between rows in groupCard
   divider: {
     height: 1,
     backgroundColor: Colors.separator,
-    marginVertical: Spacing.sm,
+    marginHorizontal: Spacing.md,
+  },
+  rowDivider: {
+    height: 1,
+    backgroundColor: Colors.separator,
+    marginHorizontal: Spacing.md,
+  },
+  // Backup
+  backupDesc: {
+    color: Colors.textSecondary,
+    fontSize: FontSize.sm,
+    marginBottom: Spacing.md,
+    lineHeight: 19,
+  },
+  backupRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
   },
   backupBtn: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
     backgroundColor: Colors.surfaceElevated,
     paddingVertical: Spacing.md,
     borderRadius: BorderRadius.md,
-    alignItems: 'center',
     borderWidth: 1,
     borderColor: Colors.cardBorder,
   },
@@ -590,10 +685,13 @@ const styles = StyleSheet.create({
   },
   restoreBtn: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
     backgroundColor: Colors.accentDark,
     paddingVertical: Spacing.md,
     borderRadius: BorderRadius.md,
-    alignItems: 'center',
   },
   restoreBtnText: {
     color: '#fff',

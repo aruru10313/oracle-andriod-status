@@ -1,5 +1,6 @@
 // ============================================================
-// ServerCard — swipeable server status card for HomeScreen
+// ServerCard — server status card for HomeScreen
+// Premium 2025/2026 redesign: glassy, full-width, sleek bars
 // ============================================================
 
 import React, { useEffect, useRef } from 'react';
@@ -12,7 +13,6 @@ import {
 } from 'react-native';
 import { Server, ServerStats } from '../types';
 import { Colors, Spacing, BorderRadius, FontSize, FontWeight, Shadow } from '../theme';
-import CircularProgress from './CircularProgress';
 import { formatUptime } from '../services/api';
 
 interface Props {
@@ -23,7 +23,7 @@ interface Props {
 }
 
 const ServerCard: React.FC<Props> = ({ server, stats, onPress, isLoading = false }) => {
-  // Pulse animation for status dot
+  // Pulse animation for the online status glow ring
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const online = stats?.online ?? false;
 
@@ -31,8 +31,8 @@ const ServerCard: React.FC<Props> = ({ server, stats, onPress, isLoading = false
     if (online) {
       const pulse = Animated.loop(
         Animated.sequence([
-          Animated.timing(pulseAnim, { toValue: 1.6, duration: 900, useNativeDriver: true }),
-          Animated.timing(pulseAnim, { toValue: 1, duration: 900, useNativeDriver: true }),
+          Animated.timing(pulseAnim, { toValue: 1.8, duration: 1100, useNativeDriver: true }),
+          Animated.timing(pulseAnim, { toValue: 1, duration: 1100, useNativeDriver: true }),
         ])
       );
       pulse.start();
@@ -57,12 +57,22 @@ const ServerCard: React.FC<Props> = ({ server, stats, onPress, isLoading = false
     <TouchableOpacity
       style={styles.card}
       onPress={onPress}
-      activeOpacity={0.85}
+      activeOpacity={0.82}
     >
+      {/* Accent top-edge line */}
+      <View style={styles.accentLine} />
+
       {/* Header row */}
       <View style={styles.header}>
-        <View style={styles.serverNameRow}>
-          {/* Pulsing status dot */}
+        {/* Server name + URL */}
+        <View style={styles.serverNameCol}>
+          <Text style={styles.serverName} numberOfLines={1}>{server.name}</Text>
+          <Text style={styles.serverUrl} numberOfLines={1}>{server.url}</Text>
+        </View>
+
+        {/* Status badge top-right */}
+        <View style={[styles.statusBadge, { backgroundColor: statusGlow, borderColor: statusColor }]}>
+          {/* Pulsing dot inside badge */}
           <View style={styles.dotWrapper}>
             <Animated.View
               style={[
@@ -72,47 +82,37 @@ const ServerCard: React.FC<Props> = ({ server, stats, onPress, isLoading = false
             />
             <View style={[styles.dot, { backgroundColor: statusColor }]} />
           </View>
-
-          <View>
-            <Text style={styles.serverName} numberOfLines={1}>{server.name}</Text>
-            <Text style={styles.serverUrl} numberOfLines={1}>{server.url}</Text>
-          </View>
-        </View>
-
-        <View style={[styles.statusBadge, { backgroundColor: statusGlow, borderColor: statusColor }]}>
           <Text style={[styles.statusText, { color: statusColor }]}>{statusText}</Text>
         </View>
       </View>
 
-      {/* Stats row */}
+      {/* Stats body */}
       {stats && online ? (
         <>
-          <View style={styles.metricsRow}>
-            <CircularProgress
-              percent={stats.cpuPercent}
-              size={72}
-              strokeWidth={7}
-              color={Colors.cpuColor}
+          {/* Horizontal metric bars */}
+          <View style={styles.barsSection}>
+            <MetricBar
               label="CPU"
+              value={stats.cpuPercent}
+              color={Colors.cpuColor}
             />
-            <CircularProgress
-              percent={stats.memoryPercent}
-              size={72}
-              strokeWidth={7}
+            <MetricBar
+              label="Memory"
+              value={stats.memoryPercent}
               color={Colors.memoryColor}
-              label="RAM"
             />
-            <CircularProgress
-              percent={stats.diskPercent}
-              size={72}
-              strokeWidth={7}
-              color={Colors.diskColor}
+            <MetricBar
               label="Disk"
+              value={stats.diskPercent}
+              color={Colors.diskColor}
             />
           </View>
 
-          {/* Bottom info row */}
-          <View style={styles.infoRow}>
+          {/* Separator */}
+          <View style={styles.separator} />
+
+          {/* Bottom chips row */}
+          <View style={styles.chipsRow}>
             <InfoChip label="Uptime" value={formatUptime(stats.uptimeSeconds)} />
             <InfoChip label="Load" value={stats.loadAvg1.toFixed(2)} />
             <InfoChip label="Cores" value={String(stats.cpuCores)} />
@@ -120,8 +120,11 @@ const ServerCard: React.FC<Props> = ({ server, stats, onPress, isLoading = false
         </>
       ) : stats && !online ? (
         <View style={styles.offlineBox}>
-          <Text style={styles.offlineEmoji}>⚠️</Text>
+          <View style={styles.offlineIconWrapper}>
+            <Text style={styles.offlineIcon}>!</Text>
+          </View>
           <Text style={styles.offlineMsg}>서버에 연결할 수 없습니다</Text>
+          <Text style={styles.offlineHint}>Pull to refresh or check the server</Text>
         </View>
       ) : isLoading ? (
         <View style={styles.offlineBox}>
@@ -133,20 +136,96 @@ const ServerCard: React.FC<Props> = ({ server, stats, onPress, isLoading = false
         </View>
       )}
 
-      {/* Footer */}
+      {/* Footer timestamp */}
       {lastChecked && (
-        <Text style={styles.lastChecked}>마지막 업데이트: {lastChecked}</Text>
+        <Text style={styles.lastChecked}>Updated {lastChecked}</Text>
       )}
     </TouchableOpacity>
   );
 };
 
+// ── Inline metric bar sub-component ──────────────────────────
+
+const MetricBar: React.FC<{ label: string; value: number; color: string }> = ({
+  label,
+  value,
+  color,
+}) => {
+  const clamped = Math.min(100, Math.max(0, value));
+  const animWidth = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.spring(animWidth, {
+      toValue: clamped,
+      useNativeDriver: false,
+      tension: 55,
+      friction: 9,
+    }).start();
+  }, [clamped]);
+
+  const widthPct = animWidth.interpolate({
+    inputRange: [0, 100],
+    outputRange: ['0%', '100%'],
+  });
+
+  const barColor = clamped >= 90 ? Colors.offline : clamped >= 70 ? Colors.warning : color;
+
+  return (
+    <View style={mStyles.row}>
+      <Text style={mStyles.label}>{label}</Text>
+      <View style={mStyles.track}>
+        <Animated.View style={[mStyles.fill, { width: widthPct, backgroundColor: barColor }]} />
+      </View>
+      <Text style={[mStyles.pct, { color: barColor }]}>{clamped.toFixed(0)}%</Text>
+    </View>
+  );
+};
+
+const mStyles = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 4,
+  },
+  label: {
+    width: 54,
+    fontSize: FontSize.xs,
+    color: Colors.textMuted,
+    fontWeight: FontWeight.medium,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  track: {
+    flex: 1,
+    height: 4,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: BorderRadius.full,
+    overflow: 'hidden',
+    marginHorizontal: Spacing.sm,
+  },
+  fill: {
+    height: '100%',
+    borderRadius: BorderRadius.full,
+  },
+  pct: {
+    width: 36,
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.bold,
+    textAlign: 'right',
+    letterSpacing: 0.3,
+  },
+});
+
+// ── Info chip ─────────────────────────────────────────────────
+
 const InfoChip: React.FC<{ label: string; value: string }> = ({ label, value }) => (
   <View style={styles.chip}>
-    <Text style={styles.chipLabel}>{label}</Text>
     <Text style={styles.chipValue}>{value}</Text>
+    <Text style={styles.chipLabel}>{label}</Text>
   </View>
 );
+
+// ── Styles ────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   card: {
@@ -154,106 +233,149 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     borderWidth: 1,
     borderColor: Colors.cardBorder,
-    padding: Spacing.md,
     marginHorizontal: Spacing.md,
     marginVertical: Spacing.sm,
+    overflow: 'hidden',
     ...Shadow.card,
+  },
+  // Subtle cyan accent line at top of card
+  accentLine: {
+    height: 2,
+    backgroundColor: Colors.accent,
+    opacity: 0.5,
+    borderTopLeftRadius: BorderRadius.lg,
+    borderTopRightRadius: BorderRadius.lg,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: Spacing.md,
+    padding: Spacing.md,
+    paddingBottom: Spacing.sm,
   },
-  serverNameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  serverNameCol: {
     flex: 1,
     marginRight: Spacing.sm,
-  },
-  dotWrapper: {
-    width: 20,
-    height: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: Spacing.sm,
-  },
-  dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    position: 'absolute',
-  },
-  dotPulse: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    position: 'absolute',
   },
   serverName: {
     fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
     color: Colors.textPrimary,
-    flex: 1,
+    letterSpacing: -0.3,
   },
   serverUrl: {
     fontSize: FontSize.xs,
     color: Colors.textMuted,
-    marginTop: 2,
+    marginTop: 3,
+    letterSpacing: 0.1,
   },
+  // Status badge
   statusBadge: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     borderRadius: BorderRadius.full,
     borderWidth: 1,
+    gap: 5,
+  },
+  dotWrapper: {
+    width: 10,
+    height: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    position: 'absolute',
+  },
+  dotPulse: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    position: 'absolute',
   },
   statusText: {
-    fontSize: FontSize.xs,
+    fontSize: 10,
     fontWeight: FontWeight.bold,
-    letterSpacing: 1,
+    letterSpacing: 1.2,
   },
-  metricsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: Spacing.md,
+  // Metric bars section
+  barsSection: {
+    paddingHorizontal: Spacing.md,
+    paddingBottom: Spacing.sm,
   },
-  infoRow: {
+  separator: {
+    height: 1,
+    backgroundColor: Colors.separator,
+    marginHorizontal: Spacing.md,
+  },
+  // Bottom chips
+  chipsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
   },
   chip: {
+    flex: 1,
     alignItems: 'center',
-  },
-  chipLabel: {
-    fontSize: FontSize.xs,
-    color: Colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
   chipValue: {
     fontSize: FontSize.sm,
-    color: Colors.textSecondary,
+    color: Colors.textPrimary,
     fontWeight: FontWeight.semibold,
+    letterSpacing: 0.2,
+  },
+  chipLabel: {
+    fontSize: 10,
+    color: Colors.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
     marginTop: 2,
   },
+  // Offline state
   offlineBox: {
     alignItems: 'center',
     paddingVertical: Spacing.lg,
+    paddingHorizontal: Spacing.md,
   },
-  offlineEmoji: {
-    fontSize: 28,
+  offlineIconWrapper: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.offlineGlow,
+    borderWidth: 1,
+    borderColor: Colors.offline,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: Spacing.sm,
   },
-  offlineMsg: {
-    color: Colors.textMuted,
-    fontSize: FontSize.sm,
+  offlineIcon: {
+    fontSize: 18,
+    color: Colors.offline,
+    fontWeight: FontWeight.bold,
+    lineHeight: 20,
   },
-  lastChecked: {
+  offlineMsg: {
+    color: Colors.textSecondary,
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.medium,
+  },
+  offlineHint: {
+    color: Colors.textMuted,
     fontSize: FontSize.xs,
+    marginTop: 4,
+  },
+  // Footer
+  lastChecked: {
+    fontSize: 10,
     color: Colors.textMuted,
     textAlign: 'right',
-    marginTop: Spacing.xs,
+    paddingHorizontal: Spacing.md,
+    paddingBottom: Spacing.sm,
+    letterSpacing: 0.2,
   },
 });
 

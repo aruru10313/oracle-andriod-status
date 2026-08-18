@@ -126,7 +126,7 @@ export async function fetchStats(server: Server): Promise<ServerStats> {
     },
 
     uptimeSeconds: Number(data.uptime?.uptime_seconds ?? data.uptime_seconds ?? 0),
-    osName: String(data.os ?? data.os_name ?? 'Ubuntu'),
+    osName: String(data.os_info ?? data.os ?? data.os_name ?? 'Linux'),
     hostname: String(data.server_name ?? data.hostname ?? server.name),
 
     processes: Array.isArray(data.processes?.top)

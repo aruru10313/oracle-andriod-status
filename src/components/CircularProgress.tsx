@@ -1,5 +1,6 @@
 // ============================================================
 // CircularProgress — SVG-based circular progress ring
+// Updated for premium 2025/2026 dark theme
 // ============================================================
 
 import React, { useEffect, useRef } from 'react';
@@ -57,13 +58,13 @@ const CircularProgress: React.FC<Props> = ({
   return (
     <View style={[styles.container, { width: size, height: size + (label ? 20 : 0) }]}>
       <Svg width={size} height={size}>
-        {/* Track (background ring) */}
+        {/* Track (background ring) — slightly visible */}
         <G rotation="-90" origin={`${center}, ${center}`}>
           <Circle
             cx={center}
             cy={center}
             r={radius}
-            stroke={Colors.surfaceElevated}
+            stroke="rgba(255,255,255,0.06)"
             strokeWidth={strokeWidth}
             fill="transparent"
           />
@@ -116,11 +117,11 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: FontSize.xs,
-    color: Colors.textSecondary,
+    color: Colors.textMuted,
     fontWeight: FontWeight.medium,
     marginTop: 4,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 0.8,
   },
 });
 
